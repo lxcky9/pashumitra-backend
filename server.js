@@ -1,48 +1,26 @@
 const express = require('express');
-const admin = require('firebase-admin');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 5000;
 
-// 🔐 Load Firebase service account key
-const serviceAccount = require('./firebaseKey.json');
+app.use(cors());
+app.use(bodyParser.json());
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+// Home route — used to test if backend is working
+app.get("/", (req, res) => {
+  res.send("Server is running");
 });
 
-const db = admin.firestore();
-
-// ✅ Test route
-app.get('/', (req, res) => {
-  res.send('Firebase backend is running!');
+// Donation route — handles POST from Wix
+app.post("/donate", (req, res) => {
+  const { name, amount } = req.body;
+  console.log("Received donation:", name, amount);
+  res.json({ message: "Donation saved successfully" });
 });
 
-// 🐾 Add new animal fundraiser
-app.post('/add-animal', async (req, res) => {
-  try {
-    const data = req.body;
-    const docRef = await db.collection('animals').add(data);
-    res.status(201).json({ id: docRef.id });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// 🐕 Get all animal fundraisers
-app.get('/animals', async (req, res) => {
-  try {
-    const snapshot = await db.collection('animals').get();
-    const animals = [];
-    snapshot.forEach(doc => {
-      animals.push({ id: doc.id, ...doc.data() });
-    });
-    res.json(animals);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const PORT = 5000;
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
